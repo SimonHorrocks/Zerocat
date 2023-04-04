@@ -2,10 +2,9 @@ package auth
 
 import (
 	"bufio"
-	"bytes"
 	"math/big"
 
-	nt "example.com/zerocat/pkg/auth/number-theory"
+	gt "example.com/zerocat/pkg/auth/group-theory"
 )
 
 // feige-fiat-shamir prover object
@@ -14,18 +13,15 @@ type FFSProver struct {
 
 	private    []*big.Int
 	challenger Challenger
-	group      *nt.CompositeMulGroup
+	group      *gt.CompositeMulGroup
 }
 
 // setup a fiege-fiat-shamir prover object
-func SetupFFSProver(private []*big.Int, challenger Challenger, group *nt.CompositeMulGroup) *FFSProver {
+func SetupFFSProver(private []*big.Int, challenger Challenger, group *gt.CompositeMulGroup) *FFSProver {
 	prover := new(FFSProver)
 	prover.private = private
 	prover.challenger = challenger
-	stream := make([]byte, ((255*3)+3)*4)
-	buf := bytes.NewBuffer(stream)
-	reader, writer := bufio.NewReader(buf), bufio.NewWriter(buf)
-	prover.buffer = bufio.NewReadWriter(reader, writer)
+	prover.group = group
 
 	return prover
 }
@@ -36,7 +32,7 @@ func (prover *FFSProver) ProofGen(randomness *big.Int, block []byte) *Proof {
 
 	// statemenmt =  r**2 mod n
 	proof.statement = big.NewInt(0)
-	proof.statement.Exp(randomness, nt.Two, prover.group.Modulus())
+	proof.statement.Exp(randomness, gt.Two, prover.group.Modulus())
 	// proof (y) = r mod n
 	proof.proof = big.NewInt(1)
 	proof.proof.Mul(proof.proof, randomness)
@@ -58,51 +54,6 @@ func (prover *FFSProver) ProofGen(randomness *big.Int, block []byte) *Proof {
 	return proof
 }
 
-// writes messages into buffer and appends proofs to them
-func (prover *FFSProver) Write(p []byte) (int, error) {
-	// TODO: break up messages into chunks of 255 bytes
-
-	for i := 0; i < len(p)/255; i++ {
-		block := p[i*255 : (i+1)*255]
-
-		randomness, err := prover.group.Random()
-
-		if err != nil {
-			return i * 255, err
-		}
-
-		proof := prover.ProofGen(randomness, block) // TODO: check randomness hasn't been used before
-
-		statement_bytes := proof.statement.Bytes()
-		proof_bytes := proof.proof.Bytes()
-
-		// writes output = message_size, message, statement_size, statement, proof_size, proof
-		output := block[:]
-
-		output = append(output, byte(len(block)))
-		output = append(output, p...)
-		output = append(output, byte(len(statement_bytes)))
-		output = append(output, proof_bytes...)
-		output = append(output, byte(len(proof_bytes)))
-		output = append(output, proof_bytes...)
-
-		nn, err := prover.buffer.Write(output)
-
-		if err != nil {
-			return (i * 255) + nn, err
-		}
-
-		prover.challenger.Update(block)
-	}
-
-	return len(p), nil
-}
-
-// wraps around the buffer object's read
-func (prover *FFSProver) Read(p []byte) (int, error) {
-	return prover.buffer.Read(p)
-}
-
 // feige-fiat-shamir verifier object
 type FFSVerifier struct {
 	buffer *bufio.ReadWriter
@@ -113,14 +64,11 @@ type FFSVerifier struct {
 }
 
 // setup a fiege-fiat-shamir verifier object
-func SetupFFSVerifier(public []*big.Int, challenger Challenger, group *nt.CompositeMulGroup) *FFSVerifier {
+func SetupFFSVerifier(public []*big.Int, challenger Challenger, modulus *big.Int) *FFSVerifier {
 	verifier := new(FFSVerifier)
 	verifier.public = public
 	verifier.challenger = challenger
-	stream := make([]byte, ((255*3)+3)*4)
-	buf := bytes.NewBuffer(stream)
-	reader, writer := bufio.NewReader(buf), bufio.NewWriter(buf)
-	verifier.buffer = bufio.NewReadWriter(reader, writer)
+	verifier.modulus = modulus
 
 	return verifier
 }
@@ -130,7 +78,7 @@ func (verifier *FFSVerifier) Verify(proof *Proof, block []byte) bool {
 	// proof_sqrd (y ** 2)
 	proof_sqrd := big.NewInt(0)
 	proof_sqrd.Set(proof.proof)
-	proof_sqrd.Exp(proof_sqrd, nt.Two, verifier.modulus)
+	proof_sqrd.Exp(proof_sqrd, gt.Two, verifier.modulus)
 
 	// verification (z) = statement (x)
 	verification := big.NewInt(1)
@@ -153,49 +101,24 @@ func (verifier *FFSVerifier) Verify(proof *Proof, block []byte) bool {
 	return verification.Cmp(proof_sqrd) == 0
 }
 
-// wraps around the buffer object's write
-func (verifier *FFSVerifier) Write(p []byte) (int, error) {
-	return verifier.buffer.Write(p)
-}
+func FFSKeyPair(k int, group *gt.CompositeMulGroup) ([]*big.Int, []*big.Int, error) {
+	private := make([]*big.Int, 0)
+	public := make([]*big.Int, 0)
 
-// reads a single block and proof from the buffer, verifies it and outputs the rseult into p as: verify?, block
-func (verifier *FFSVerifier) Read(p []byte) (int, error) {
-	block_size, statement_size, proof_size := []byte{0}, []byte{0}, []byte{0}
+	for i := 0; i < k; i++ {
+		candidate, err := group.Random()
 
-	verifier.buffer.Read(block_size)
-	block := make([]byte, block_size[0])
-	verifier.buffer.Read(block)
+		if err != nil {
+			return nil, nil, err
+		}
 
-	verifier.buffer.Read(statement_size)
-	statement_bytes := make([]byte, statement_size[0])
-	verifier.buffer.Read(statement_bytes)
+		private = append(private, candidate)
 
-	verifier.buffer.Read(proof_size)
-	proof_bytes := make([]byte, proof_size[0])
-	verifier.buffer.Read(proof_bytes)
+		square := big.NewInt(0)
+		square.Exp(candidate, gt.Two, group.Modulus())
 
-	statement := big.NewInt(0)
-	proof := big.NewInt(0)
-
-	statement.SetBytes(statement_bytes)
-	proof.SetBytes(proof_bytes)
-
-	proof_obj := new(Proof)
-	proof_obj.statement = statement
-	proof_obj.proof = proof
-
-	result := verifier.Verify(proof_obj, block)
-
-	if result {
-		p = append(p, byte(1))
-		verifier.challenger.Update(block)
-	} else {
-		p = append(p, byte(0))
+		public = append(public, square)
 	}
 
-	// TODO: check this actually updates the buffer
-	p = append(p, block_size...)
-	p = append(p, block...)
-
-	return 2 + int(block_size[0]), nil
+	return public, private, nil
 }

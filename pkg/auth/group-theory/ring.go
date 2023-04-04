@@ -1,4 +1,4 @@
-package numbertheory
+package grouptheory
 
 import (
 	"crypto/rand"

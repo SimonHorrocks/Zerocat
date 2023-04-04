@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"io"
 	"math/big"
 )
 
@@ -11,9 +10,7 @@ type Proof struct {
 	proof     *big.Int
 }
 
-// Prover interface acts as a layer, anything written to it can have a proof constructed over it
 type Prover interface {
-	io.ReadWriter
 	ProofGen(*big.Int, []byte) *Proof
 }
 
