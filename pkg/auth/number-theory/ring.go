@@ -7,9 +7,9 @@ import (
 
 // some helpful constants
 var (
-	zero *big.Int = big.NewInt(0)
-	one  *big.Int = big.NewInt(1)
-	two  *big.Int = big.NewInt(2)
+	Zero *big.Int = big.NewInt(0)
+	One  *big.Int = big.NewInt(1)
+	Two  *big.Int = big.NewInt(2)
 )
 
 type Ring interface {
@@ -61,7 +61,7 @@ func CompositePrimeRing(size int) (*ModRing, *big.Int, *big.Int) {
 
 // any number is a member of the ring if it is between 0 and the modulus
 func (ring *ModRing) In(number *big.Int) bool {
-	return number.Cmp(one) > -1 && number.Cmp(ring.modulus) < 0
+	return number.Cmp(One) > -1 && number.Cmp(ring.modulus) < 0
 }
 
 // samples an element from the ring

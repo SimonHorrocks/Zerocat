@@ -23,9 +23,9 @@ func SetupCompGroup(size int) *CompositeMulGroup {
 	group.totient = big.NewInt(1)
 
 	temp := big.NewInt(0)
-	temp.Sub(p, one)
+	temp.Sub(p, One)
 	group.totient.Mul(group.totient, temp)
-	temp.Sub(q, one)
+	temp.Sub(q, One)
 	group.totient.Mul(group.totient, temp)
 
 	return group
@@ -49,7 +49,7 @@ func (compositeGroup *CompositeMulGroup) In(number *big.Int) bool {
 	gcd := big.NewInt(0)
 	gcd.GCD(nil, nil, number, compositeGroup.ring.modulus)
 
-	return gcd.Cmp(one) == 0 && compositeGroup.ring.In(number)
+	return gcd.Cmp(One) == 0 && compositeGroup.ring.In(number)
 }
 
 // computes the multiplicative inverse using euler's theorem
@@ -59,8 +59,16 @@ func (compositeGroup *CompositeMulGroup) Inverse(member *big.Int) *big.Int {
 	}
 
 	inverse := big.NewInt(0)
-	inverse.Sub(compositeGroup.totient, one)
+	inverse.Sub(compositeGroup.totient, One)
 	inverse.Exp(member, inverse, compositeGroup.ring.modulus)
 
 	return inverse
+}
+
+func (compositeGroup *CompositeMulGroup) Modulus() *big.Int {
+	return compositeGroup.ring.modulus
+}
+
+func (compositeGroup *CompositeMulGroup) Mod(number *big.Int) *big.Int {
+	return compositeGroup.ring.Mod(number)
 }
