@@ -14,9 +14,11 @@ type Proof struct {
 // Prover interface acts as a layer, anything written to it can have a proof constructed over it
 type Prover interface {
 	io.ReadWriter
-	ProofGen(*big.Int, Challenger) *Proof
+	ProofGen(*big.Int, []byte) *Proof
 }
 
+// the challenger produces a deterministic challenge given a statement
 type Challenger interface {
-	Challenge(*big.Int) []byte
+	Update([]byte) // commits latest verified block
+	Challenge(*big.Int, []byte) []byte
 }
