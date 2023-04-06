@@ -13,13 +13,13 @@ func TestSha256AESKEM(t *testing.T) {
 
 	text := []byte("the quick brown fox jumped over the lazy dog")
 
-	capsule, nonce, err := encapsulator.Encapsulate(text)
+	text, capsule, nonce, err := encapsulator.Encapsulate(text)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = encapsulator.Decrypt(text, capsule, nonce)
+	text, err = encapsulator.Decrypt(text, capsule, nonce)
 
 	if err != nil {
 		t.Error(err)

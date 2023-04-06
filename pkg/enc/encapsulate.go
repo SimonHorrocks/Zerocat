@@ -6,15 +6,19 @@ import (
 	"crypto/rand"
 )
 
+// the heart of the Key Encapsulation Mechanism, this generates a cryptographically secure random number
+// and uses it to derive a key returning the material that encapsulates the key and the encrypted plaintext
 type Encapsulator interface {
-	Encapsulate([]byte, []byte) ([]byte, []byte, error)
-	Decrypt([]byte, []byte, []byte, []byte) error
+	Encapsulate([]byte) ([]byte, []byte, []byte, error)
+	Decrypt([]byte, []byte, []byte) error
 }
 
+// An encapsulator that utilizes AES for encryption
 type AESEncapsulator struct {
 	deriver Deriver
 }
 
+// Constructor for AES key encapsulator, takes in any type of key derivation function
 func NewAESEncapsulator(deriver Deriver) *AESEncapsulator {
 	encapsulator := new(AESEncapsulator)
 	encapsulator.deriver = deriver
@@ -22,12 +26,13 @@ func NewAESEncapsulator(deriver Deriver) *AESEncapsulator {
 	return encapsulator
 }
 
-func (encapsulator *AESEncapsulator) Encapsulate(plaintext []byte) ([]byte, []byte, error) {
+// takes plaintext and outputs ciphertext along with material encapsulating the key
+func (encapsulator *AESEncapsulator) Encapsulate(plaintext []byte) ([]byte, []byte, []byte, error) {
 	randomness := make([]byte, 32)
 	_, err := rand.Read(randomness)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	key := encapsulator.deriver.Derive(randomness)
@@ -35,43 +40,48 @@ func (encapsulator *AESEncapsulator) Encapsulate(plaintext []byte) ([]byte, []by
 	block, err := aes.NewCipher(key)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	stream, err := cipher.NewGCM(block)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	nonce := make([]byte, stream.NonceSize())
 	_, err = rand.Read(nonce)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	stream.Seal(nonce, nonce, plaintext, nil)
+	ciphertext := stream.Seal(plaintext[:0], nonce, plaintext, nil)
 
-	return randomness, nonce, nil
+	return ciphertext, randomness, nonce, nil
 }
 
-func (encapsulator *AESEncapsulator) Decrypt(ciphertext []byte, capsule []byte, nonce []byte) error {
+// takes ciphertext and key material to decrypt the message
+func (encapsulator *AESEncapsulator) Decrypt(ciphertext []byte, capsule []byte, nonce []byte) ([]byte, error) {
 	key := encapsulator.deriver.Derive(capsule)
 
 	block, err := aes.NewCipher(key)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	stream, err := cipher.NewGCM(block)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	stream.Open(nil, nonce, ciphertext, nil)
+	plaintext, err := stream.Open(ciphertext[:0], nonce, ciphertext, nil)
 
-	return nil
+	if err != nil {
+		return nil, err
+	}
+
+	return plaintext, nil
 }
