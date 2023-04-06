@@ -31,6 +31,10 @@ func SetupCompGroup(size int) *CompositeMulGroup {
 	return group
 }
 
+func (compositeGroup *CompositeMulGroup) Ring() *ModRing {
+	return compositeGroup.ring
+}
+
 // samples a composite multiplicative group
 func (compositeGroup *CompositeMulGroup) Random() (*big.Int, error) {
 	for {

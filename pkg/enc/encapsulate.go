@@ -10,7 +10,7 @@ import (
 // and uses it to derive a key returning the material that encapsulates the key and the encrypted plaintext
 type Encapsulator interface {
 	Encapsulate([]byte) ([]byte, []byte, []byte, error)
-	Decrypt([]byte, []byte, []byte) error
+	Decrypt([]byte, []byte, []byte) ([]byte, error)
 }
 
 // An encapsulator that utilizes AES for encryption

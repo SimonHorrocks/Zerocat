@@ -19,12 +19,14 @@ type Ring interface {
 
 type ModRing struct {
 	modulus *big.Int
+	size    int
 }
 
 // sets up a basic ring of numbers modulo any number n
 func SetupModRing(modulus *big.Int) *ModRing {
 	ring := new(ModRing)
 	ring.modulus = modulus
+	ring.size = modulus.BitLen()
 
 	return ring
 }
@@ -57,6 +59,10 @@ func CompositePrimeRing(size int) (*ModRing, *big.Int, *big.Int) {
 	n.Mul(p, q)
 
 	return SetupModRing(n), p, q
+}
+
+func (ring *ModRing) Size() int {
+	return ring.size
 }
 
 // any number is a member of the ring if it is between 0 and the modulus

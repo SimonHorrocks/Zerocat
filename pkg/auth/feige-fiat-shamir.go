@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bufio"
 	"math/big"
 
 	gt "example.com/zerocat/pkg/auth/group-theory"
@@ -9,8 +8,6 @@ import (
 
 // feige-fiat-shamir prover object
 type FFSProver struct {
-	buffer *bufio.ReadWriter
-
 	private    []*big.Int
 	challenger Challenger
 	group      *gt.CompositeMulGroup
@@ -24,6 +21,10 @@ func SetupFFSProver(private []*big.Int, challenger Challenger, group *gt.Composi
 	prover.group = group
 
 	return prover
+}
+
+func (prover *FFSProver) Group() *gt.CompositeMulGroup {
+	return prover.group
 }
 
 // generates NIZK proof for feige-fiat-shamir
@@ -56,8 +57,6 @@ func (prover *FFSProver) ProofGen(randomness *big.Int, block []byte) *Proof {
 
 // feige-fiat-shamir verifier object
 type FFSVerifier struct {
-	buffer *bufio.ReadWriter
-
 	public     []*big.Int
 	challenger Challenger
 	modulus    *big.Int
@@ -71,6 +70,10 @@ func SetupFFSVerifier(public []*big.Int, challenger Challenger, modulus *big.Int
 	verifier.modulus = modulus
 
 	return verifier
+}
+
+func (verifier *FFSVerifier) Modulus() *big.Int {
+	return verifier.modulus
 }
 
 // verifies a NIZK feige-fiat-shamir proof

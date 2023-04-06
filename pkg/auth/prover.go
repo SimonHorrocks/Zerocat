@@ -10,6 +10,22 @@ type Proof struct {
 	proof     *big.Int
 }
 
+func (proof *Proof) Proof() *big.Int {
+	return proof.proof
+}
+
+func (proof *Proof) Statement() *big.Int {
+	return proof.statement
+}
+
+func NewProof(statement, proof *big.Int) *Proof {
+	proof_obj := new(Proof)
+	proof_obj.proof = proof
+	proof_obj.statement = statement
+
+	return proof_obj
+}
+
 type Prover interface {
 	ProofGen(*big.Int, []byte) *Proof
 }
