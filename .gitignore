@@ -1,4 +1,5 @@
+.vscode
 keys
-keys/*
-cmd/listenner/private_const.go
-cmd/shell/public_const.go
+keys\*
+cmd\listenner\private_const.go
+cmd\shell\public_const.go
