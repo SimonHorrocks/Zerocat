@@ -44,10 +44,9 @@ func (wrapper *FFSInputWrapper) Wrap() ([]byte, error) {
 	statement_bytes := make([]byte, wrapper.prover.Group().Ring().Size()/8)
 	statement_bytes = proof.Statement().FillBytes(statement_bytes)
 	output := make([]byte, 0)
-	output = append(output, byte(n))
-	output = append(output, buf[:n]...)
 	output = append(output, statement_bytes...)
 	output = append(output, proof_bytes...)
+	output = append(output, buf[:n]...)
 
 	return output, nil
 }

@@ -10,7 +10,7 @@ import (
 	"example.com/zerocat/pkg/enc"
 )
 
-func TestWrappers(t *testing.T) {
+func TestFFSWrappers(t *testing.T) {
 	group := gt.SetupCompGroup(3072)
 	public, private, err := auth.FFSKeyPair(128, group)
 
@@ -29,8 +29,8 @@ func TestWrappers(t *testing.T) {
 	buffer := new(bytes.Buffer)
 
 	input_wrapper := comm.NewFFSInputWrapper(prover, buffer)
-	encapsulation_wrapper := comm.NewFFSEncapsulationWrapper(encapsulator, buffer, group.Ring().Size()/4)
-	decryption_wrapper := comm.NewFFSDecryptionWrapper(encapsulator, buffer, group.Ring().Size()/4, 12, 32)
+	encapsulation_wrapper := comm.NewEncapsulationWrapper(encapsulator, buffer)
+	decryption_wrapper := comm.NewDecryptionWrapper(encapsulator, buffer, 12, 32)
 	output_wrapper := comm.NewFFSOutputWrapper(verifier, buffer)
 
 	buffer.Write([]byte("Hello World!!"))
