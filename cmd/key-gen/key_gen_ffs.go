@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+	fmt.Println("running keygen")
 	public := flag.Bool("public", false, "generate public key constants")
 	private := flag.Bool("private", false, "generate private key constants")
 	k := flag.Int("k", 32, "the number of elements in the keys")
@@ -87,19 +88,39 @@ func main() {
 		public_block_decoded, key_bytes := pem.Decode(key_bytes)
 		private_block_decoded, key_bytes := pem.Decode(key_bytes)
 		modulus_block_decoded, key_bytes := pem.Decode(key_bytes)
-		fmt.Println("const", "(")
+
+		var out_file *os.File
+		defer out_file.Close()
+
 		if *public {
-			fmt.Print("\t", "k int = ", public_block_decoded.Headers["k"], "\n")
-			fmt.Print("\t", "size int = ", public_block_decoded.Headers["size"], "\n")
-			fmt.Print("\t", "public string = \"", base64.StdEncoding.EncodeToString(public_block_decoded.Bytes), "\"", "\n")
-			fmt.Print("\t", "modulus string = \"", base64.StdEncoding.EncodeToString(modulus_block_decoded.Bytes), "\"", "\n")
+			out_file, err = os.Create("public_const.go")
+
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Fprint(out_file, "package main\n\n")
+			fmt.Fprintln(out_file, "const", "(")
+			fmt.Fprint(out_file, "\t", "k int = ", public_block_decoded.Headers["k"], "\n")
+			fmt.Fprint(out_file, "\t", "size int = ", public_block_decoded.Headers["size"], "\n")
+			fmt.Fprint(out_file, "\t", "public string = \"", base64.StdEncoding.EncodeToString(public_block_decoded.Bytes), "\"", "\n")
+			fmt.Fprint(out_file, "\t", "modulus string = \"", base64.StdEncoding.EncodeToString(modulus_block_decoded.Bytes), "\"", "\n")
+			fmt.Fprintln(out_file, ")")
 		} else if *private {
-			fmt.Print("\t", "k int = ", private_block_decoded.Headers["k"], "\n")
-			fmt.Print("\t", "size int = ", private_block_decoded.Headers["size"], "\n")
-			fmt.Print("\t", "private string = \"", base64.StdEncoding.EncodeToString(private_block_decoded.Bytes), "\"", "\n")
-			fmt.Print("\t", "modulus string = \"", base64.StdEncoding.EncodeToString(modulus_block_decoded.Bytes), "\"", "\n")
+			out_file, err = os.Create("private_const.go")
+
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Fprint(out_file, "package main\n\n")
+			fmt.Fprintln(out_file, "const", "(")
+			fmt.Fprint(out_file, "\t", "k int = ", private_block_decoded.Headers["k"], "\n")
+			fmt.Fprint(out_file, "\t", "size int = ", private_block_decoded.Headers["size"], "\n")
+			fmt.Fprint(out_file, "\t", "private string = \"", base64.StdEncoding.EncodeToString(private_block_decoded.Bytes), "\"", "\n")
+			fmt.Fprint(out_file, "\t", "modulus string = \"", base64.StdEncoding.EncodeToString(modulus_block_decoded.Bytes), "\"", "\n")
+			fmt.Fprintln(out_file, ")")
 		}
-		fmt.Println(")")
 	}
 
 }
