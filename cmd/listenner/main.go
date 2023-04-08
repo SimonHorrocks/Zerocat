@@ -6,18 +6,25 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
-	"fmt"
+	"flag"
 	"math/big"
+	"net"
+	"os"
 
 	"example.com/zerocat/pkg/auth"
 	gt "example.com/zerocat/pkg/auth/group-theory"
+	"example.com/zerocat/pkg/comm"
+	"example.com/zerocat/pkg/enc"
 )
 
 var (
 	private_key []*big.Int
 	master_key  []byte
+	ring        *gt.ModRing
 	group       *gt.CompositeMulGroup
+	challenger  *auth.ChainChallenger
 	prover      *auth.FFSProver
 )
 
@@ -34,8 +41,91 @@ func init() {
 		private_key[i] = big.NewInt(0)
 		private_key[i].SetBytes(private_bytes[i*(size/8) : (i+1)*(size/8)])
 	}
+
+	master_key, err = base64.StdEncoding.DecodeString(master)
+
+	modulus_bytes, err := base64.StdEncoding.DecodeString(modulus)
+
+	if err != nil {
+		panic(err)
+	}
+
+	modulus_big := big.NewInt(0)
+	modulus_big.SetBytes(modulus_bytes)
+
+	ring = gt.SetupModRing(modulus_big)
+	group = gt.NewCompGroup(ring)
+
+	challenger = auth.NewChainChallenger()
+	prover = auth.SetupFFSProver(private_key, challenger, group)
 }
 
 func main() {
-	fmt.Println(private_key)
+
+	network := flag.String("network", "tcp", "network protocol to use")
+	address := flag.String("address", "127.0.0.1:9000", "the address to listen on")
+
+	flag.Parse()
+
+	send := make(chan []byte)
+
+	input_wrapper := comm.NewFFSInputWrapper(prover, os.Stdin)
+
+	deriver := enc.NewSha256Deriver(master_key)
+	encapsulator := enc.NewAESEncapsulator(deriver)
+
+	encapsulation_buffer := new(bytes.Buffer)
+	encapsulation_wrapper := comm.NewEncapsulationWrapper(encapsulator, encapsulation_buffer)
+
+	go func() {
+		for {
+			data, err := input_wrapper.Wrap()
+			challenger.Update(data[prover.Group().Ring().Size()/4:])
+
+			if err != nil {
+				panic(err)
+			}
+
+			send <- data
+		}
+	}()
+
+	listenner, err := net.Listen(*network, *address)
+
+	if err != nil {
+		panic(err)
+	}
+
+	if connection, err := listenner.Accept(); err == nil {
+
+		decryption_wrapper := comm.NewDecryptionWrapper(encapsulator, connection, 12, 32)
+
+		go func() {
+			for {
+				data, err := decryption_wrapper.Wrap()
+
+				if err != nil {
+					panic(err)
+				}
+
+				os.Stdout.Write(data)
+			}
+		}()
+
+		for {
+			select {
+			case outbound := <-send:
+				encapsulation_buffer.Write(outbound)
+				data, err := encapsulation_wrapper.Wrap()
+
+				if err != nil {
+					panic(err)
+				}
+
+				connection.Write(data)
+			}
+		}
+	} else {
+		panic(err)
+	}
 }

@@ -14,6 +14,16 @@ type CompositeMulGroup struct {
 	totient *big.Int
 }
 
+// for the purposes of deserialization, creates a group
+// this group will not be able to compute inverses
+func NewCompGroup(ring *ModRing) *CompositeMulGroup {
+	group := new(CompositeMulGroup)
+	group.ring = ring
+	group.totient = big.NewInt(0)
+
+	return group
+}
+
 // setups a composite multiplicative group
 func SetupCompGroup(size int) *CompositeMulGroup {
 	group := new(CompositeMulGroup)

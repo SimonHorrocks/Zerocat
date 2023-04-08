@@ -1,6 +1,7 @@
 package comm
 
 import (
+	"encoding/binary"
 	"io"
 
 	"example.com/zerocat/pkg/enc"
@@ -41,7 +42,15 @@ func (wrapper *DecryptionWrapper) Wrap() ([]byte, error) {
 		return nil, err
 	}
 
-	ciphertext, err := io.ReadAll(wrapper.input)
+	ciphertext_size := make([]byte, 4)
+	_, err = io.ReadFull(wrapper.input, ciphertext_size)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ciphertext := make([]byte, binary.LittleEndian.Uint32(ciphertext_size))
+	_, err = io.ReadFull(wrapper.input, ciphertext)
 
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package comm
 
 import (
+	"encoding/binary"
 	"io"
 
 	"example.com/zerocat/pkg/enc"
@@ -38,6 +39,9 @@ func (wrapper *EncapsulationWrapper) Wrap() ([]byte, error) {
 	output := make([]byte, 0)
 	output = append(output, nonce...)
 	output = append(output, randomness...)
+	ciphertext_size := make([]byte, 4)
+	binary.LittleEndian.PutUint32(ciphertext_size, uint32(len(ciphertext)))
+	output = append(output, ciphertext_size...)
 	output = append(output, ciphertext...)
 
 	return output, nil

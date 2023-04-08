@@ -1,6 +1,8 @@
 package enc
 
-import "crypto/sha256"
+import (
+	"crypto/sha256"
+)
 
 // the Deriver implements the functionality to produce a unique session key from the encapsulating material provided
 type Deriver interface {
