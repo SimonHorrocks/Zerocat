@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"flag"
+	"fmt"
 	"math/big"
 	"net"
 	"os"
@@ -66,6 +67,8 @@ func main() {
 	address := flag.String("address", "127.0.0.1:9000", "the address to listen on")
 
 	flag.Parse()
+
+	banner()
 
 	send := make(chan []byte)
 
@@ -128,4 +131,22 @@ func main() {
 	} else {
 		panic(err)
 	}
+}
+
+func banner() {
+	fmt.Println("    .@@/                        (@@.    ")
+	fmt.Println("  (@&  (@&                   .@@(  &@(  ")
+	fmt.Println("  (@&    .@@/              (@&     &@(  ")
+	fmt.Println("  (@&    .@@@@@@@@@@@@@@@@@@@&     &@(    ________          ________  ________  __________   ")
+	fmt.Println("    .@@/      .@@/           .@@@@@.     |\\   __  \\        |\\   ____\\|\\   __  \\|\\____   __\\ ")
+	fmt.Println("  (@@@@@@&                      (@@@@(   \\ \\  \\|\\  \\       \\ \\  \\___|\\ \\  \\|\\  \\|___ \\  \\_| ")
+	fmt.Println("@@@@&       (@&         .@@/         /@@  \\ \\  \\\\\\  \\       \\ \\  \\    \\ \\   __  \\   \\ \\  \\  ")
+	fmt.Println("@@@@@@@/                        (@@@@@@@   \\ \\  \\\\\\  \\       \\ \\  \\____\\ \\  \\ \\  \\   \\ \\  \\ ")
+	fmt.Println("@@/      .@@/    (@@@@/    (@&     &@@@@    \\ \\_______\\       \\ \\_______\\ \\__\\ \\__\\   \\ \\__\\")
+	fmt.Println("  (@&       (@@@@/    (@@@@/       &@(       \\|_______|        \\|_______|\\|__|\\|__|    \\|__|")
+	fmt.Println("    .@@/                        (@@.    ")
+	fmt.Println("       (@@@@@@@@@@@@@@@@@@@@@@@@(        A Zero-Knowledge Reverse Shell Malware!")
+	fmt.Println("                 (@@@@@@&          &@@@@")
+	fmt.Println("              .@@/      .@@@@&  (@@.    ")
+	fmt.Println("              .@@/         (@@@@(       ")
 }
