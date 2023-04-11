@@ -13,10 +13,10 @@ import (
 	"net"
 	"os/exec"
 
-	"example.com/zerocat/pkg/auth"
-	gt "example.com/zerocat/pkg/auth/group-theory"
-	"example.com/zerocat/pkg/comm"
-	"example.com/zerocat/pkg/enc"
+	"github.com/SimonHorrocks/Zerocat/pkg/auth"
+	gt "github.com/SimonHorrocks/Zerocat/pkg/auth/group-theory"
+	"github.com/SimonHorrocks/Zerocat/pkg/comm"
+	"github.com/SimonHorrocks/Zerocat/pkg/enc"
 )
 
 const (

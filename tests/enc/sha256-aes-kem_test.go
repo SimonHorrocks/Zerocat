@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"example.com/zerocat/pkg/enc"
+	"github.com/SimonHorrocks/Zerocat/pkg/enc"
 )
 
 func TestSha256AESKEM(t *testing.T) {

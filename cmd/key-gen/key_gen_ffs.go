@@ -11,8 +11,8 @@ import (
 	"os"
 	"strconv"
 
-	"example.com/zerocat/pkg/auth"
-	gt "example.com/zerocat/pkg/auth/group-theory"
+	"github.com/SimonHorrocks/Zerocat/pkg/auth"
+	gt "github.com/SimonHorrocks/Zerocat/pkg/auth/group-theory"
 )
 
 func main() {
