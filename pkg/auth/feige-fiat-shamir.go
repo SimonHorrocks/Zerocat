@@ -3,7 +3,7 @@ package auth
 import (
 	"math/big"
 
-	gt "example.com/zerocat/pkg/auth/group-theory"
+	gt "github.com/SimonHorrocks/Zerocat/pkg/auth/group-theory"
 )
 
 // feige-fiat-shamir prover object
