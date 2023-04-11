@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 
-	"example.com/zerocat/pkg/enc"
+	"github.com/SimonHorrocks/Zerocat/pkg/enc"
 )
 
 // this wrapper decrypts proofs using the encapsulated key

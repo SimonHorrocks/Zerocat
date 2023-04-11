@@ -3,8 +3,8 @@ package auth_test
 import (
 	"testing"
 
-	"example.com/zerocat/pkg/auth"
-	grouptheory "example.com/zerocat/pkg/auth/group-theory"
+	"github.com/SimonHorrocks/Zerocat/pkg/auth"
+	grouptheory "github.com/SimonHorrocks/Zerocat/pkg/auth/group-theory"
 )
 
 func TestNIZKFFS(t *testing.T) {

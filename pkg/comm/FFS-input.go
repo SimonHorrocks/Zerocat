@@ -3,7 +3,7 @@ package comm
 import (
 	"io"
 
-	"example.com/zerocat/pkg/auth"
+	"github.com/SimonHorrocks/Zerocat/pkg/auth"
 )
 
 // this wrapper wraps messages in blocks of 255 bytes into proofs

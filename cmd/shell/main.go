@@ -76,6 +76,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer connection.Close()
 
 	if *disguise != "" {
 		forward, err = net.Dial(*network, *disguise)
@@ -83,6 +84,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		defer forward.Close()
 	}
 
 	defer connection.Close()

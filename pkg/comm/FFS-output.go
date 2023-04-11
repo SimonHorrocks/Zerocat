@@ -4,7 +4,7 @@ import (
 	"io"
 	"math/big"
 
-	"example.com/zerocat/pkg/auth"
+	"github.com/SimonHorrocks/Zerocat/pkg/auth"
 )
 
 // this wrapper verifies messages and outputs the result
